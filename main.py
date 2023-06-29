@@ -135,7 +135,7 @@ def dial_the_num(number ,code7digit):
                     the_hash_key = driver.find_element(By.XPATH , '//div[@data-text-as-pseudo-element = "#"]')
                     # enter the 7 digit codes from text file
                     time.sleep(5)
-                    count = 1
+
                     for i in range(3):
                         for char in code7digits[i].strip():
                             print(f'the code being used is {char}')
@@ -143,11 +143,11 @@ def dial_the_num(number ,code7digit):
                             time.sleep(random.uniform(0.5 , 0.6))
                         time.sleep(0.4)
                         the_hash_key.click()
-                        count+=1
+
                         
-                        if count == 4:
-                            break
-                        time.sleep(6)
+
+                        time.sleep(14)
+
                     
                     for i in range(2):
                         the_hash_key.click()
