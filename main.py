@@ -35,9 +35,6 @@ elif platform.system().lower() == "windows" :
 #loading 7 digit codes and store in a list
 with open("doc/7digitcodes.txt", 'r') as file:
     code7digits = file.readlines()
-    if len(code7digits)%3 != 0:
-        print("warning: the number of codes in 7digitcodes.txt are not devided by 3")
-
 
 
 # creating and opening browser with user data directory to save cookies
@@ -46,44 +43,56 @@ driver.get("https://web.skype.com/?openPstnPage=true")
 time.sleep(0.5)
 
 
+## get username and password from credential file
+with open("doc/credential.json", 'r') as file:
+    credential = json.load(file)
+    username = credential['username']
+    password = credential['password']
+
+
 # check if logged in or not
 try:
-    driver.find_element('xpath', "//input[@name='loginfmt']").click()
-    print("login in progress...")
     # login with credential from credential file
-    with open("doc/credential.json", 'r') as file:
-        credential = json.load(file)
-        username = credential['username']
-        password = credential['password']
-    # enter username
-    ActionChains(driver).send_keys(username).send_keys(Keys.ENTER).perform()
-    # enter password
-    time.sleep(1.5)
-    element = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.ID, "i0118")))
-    element.click()
-    ActionChains(driver).send_keys(password).send_keys(Keys.ENTER).perform()
+    try:
+        driver.find_element('xpath', "//input[@name='loginfmt']").click()
+        # enter username
+        ActionChains(driver).send_keys(username).send_keys(Keys.ENTER).perform()
+        time.sleep(1.5)
+    except:
+        pass
+    
+    #enter password..
+    try:
+        element = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.ID, "i0118")))
+        element.click()
+        ActionChains(driver).send_keys(password).send_keys(Keys.ENTER).perform()
+    except:
+        pass
+
     try:
         iShowSkip = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.ID, "iShowSkip")))
         iShowSkip.click()
     except Exception as error:
-        print(error)
+        # print(error)
+        pass
     try:
         idSIButton9 = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.ID, "idSIButton9")))
         idSIButton9.click()
     except Exception as error:
-        print(error)
+        # print(error)
+        pass
     try:
         iCancel = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.ID, "iCancel")))
         iCancel.click()
     except Exception as error:
-        print(error)
+        # print(error)
+        pass
 except Exception as error:
     pass
     print("already logged in...")
 
 
-
-def dial_the_num(number ,code7digit):
+def dial_the_num(number ,codeptr):
     # wait for the dial pad to load and dial the call
     for i in range(5):
         try:
@@ -114,15 +123,15 @@ def dial_the_num(number ,code7digit):
         try:
             try:
                 error_popup = driver.find_element(By.XPATH , '//div[@data-text-as-pseudo-element = "Oops, something went wrong."]')
-                message = serror_popup.get_attribute("data-text-as-pseudo-element")
+                message = error_popup.get_attribute("data-text-as-pseudo-element")
                 print(message)
                 continue
-            except:
-                
+            except:          
             
                 try:
                     element = WebDriverWait(driver, 15).until(EC.visibility_of_element_located((By.XPATH, '//div[@class="reactxp-ignore-pointer-events"]//button[@aria-label = "Captions"]')))
                     print('The call has connected')
+                    element.click()
                 except:
                     print("the call didin't go through")
                     continue
@@ -136,37 +145,66 @@ def dial_the_num(number ,code7digit):
                     # enter the 7 digit codes from text file
                     time.sleep(5)
 
-                    for i in range(3):
-                        for char in code7digits[i].strip():
-                            print(f'the code being used is {char}')
-                            input_box.send_keys(char)
-                            time.sleep(random.uniform(0.5 , 0.6))
-                        time.sleep(0.4)
-                        the_hash_key.click()
+                    print(f'the code being used is {code7digits[codeptr]}')
+                    for char in code7digits[codeptr].strip():
+                        input_box.send_keys(char)
+                        time.sleep(random.uniform(0.1 , 0.3))
+                    time.sleep(0.2)
+                    the_hash_key.click()
 
-                        
+                    # get the caption....
+                    try:
+                        caption1 = WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div/div/div[1]/div[2]/div/div/div/div/div[1]/div/div/div/div[6]/div[1]/div/div/div/div/div[1]/div[2]/div")))
+                        print("caption located")
+                        text = caption1.get_attribute("data-text-as-pseudo-element")
+                        print(f"the caption get caption1 : {text}")
+                        time.sleep(3)
+                        caption2 = driver.find_element('xpath', "/html/body/div[1]/div/div/div[1]/div[2]/div/div/div/div/div[1]/div/div/div/div[6]/div[1]/div/div/div/div/div[1]/div[2]/div")
+                        caption2 = caption2.get_attribute("data-text-as-pseudo-element")
+                        print(f"the caption get caption2 : {caption2}")
 
-                        time.sleep(14)
+                        # check the caption bro
+                        keywords = ["We're sorry", "was not recognized", "Press 0 to speak with a specialist", "followed by the pound sign","re enter your access code", "Ender your access code", "not recognized"]
+                        for words in keywords:
+                            if words.lower().strip() in caption2 :
+                                driver.find_element('xpath', "//button[@title='Close']").click()
+                                ActionChains(driver).key_down(Keys.CONTROL).key_down(Keys.SHIFT).send_keys('h').key_up(Keys.SHIFT).key_up(Keys.CONTROL).perform()
+                                cancel_butun = WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.XPATH, "(//div[@data-text-as-pseudo-element='Cancel'])[2]")))
+                                cancel_butun.click()
+                                break
+                        else:
+                            with open("doc/authCode.txt", 'a') as file :
+                                file.write(f"{code7digits[codeptr].strip()} : {caption2}\n")
+                            driver.find_element('xpath', "//button[@title='Close']").click()
+                            ActionChains(driver).key_down(Keys.CONTROL).key_down(Keys.SHIFT).send_keys('h').key_up(Keys.SHIFT).key_up(Keys.CONTROL).perform()
+                            cancel_butun = WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.XPATH, "(//div[@data-text-as-pseudo-element='Cancel'])[2]")))
+                            cancel_butun.click()
 
-                    
-                    for i in range(2):
-                        the_hash_key.click()
-                        time.sleep(random.uniform(0.4 , 0.8))
-                
+                    except Exception as error:
+                        print("re enter the code again")
+                        return "reEnter"
+                    # for i in range(2):
+                    #     the_hash_key.click()
+                    #     time.sleep(random.uniform(0.4 , 0.8))
+            break
         except:
             time.sleep(0.5)
+            print(i, end='-')
 #the xpath for the error message popup text //div[@data-text-as-pseudo-element = "Oops, something went wrong."]
 # 7 digit code file handling....
 print("dialing the number...")
 with open('doc/phonenumber.txt','r') as file:
     number = file.read().strip()
 codeptr = 0
-for i in range(len(code7digits)//3) :
-    tempcodelist = code7digits[codeptr : codeptr+3]
-    if len(tempcodelist) < 3:
-        tempcodelist = code7digits[-3:]
+for i in range(len(code7digits)) :
     # dial_the_call function call
-    dial_the_num(number, tempcodelist)
-    codeptr += 3
+    r = dial_the_num(number, codeptr)
+    while r == "reEnter":
+        r = dial_the_num(number, codeptr)
+    codeptr += 1
+    with open("doc/7digitcodes.txt", 'w') as file :
+        for i in code7digits[codeptr : ]:
+            file.write(i)
 
 time.sleep(1000)
+
