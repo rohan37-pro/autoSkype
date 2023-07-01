@@ -145,12 +145,13 @@ def dial_the_num(number ,codeptr):
                     # enter the 7 digit codes from text file
                     time.sleep(5)
 
+                    
                     print(f'the code being used is {code7digits[codeptr]}')
                     for char in code7digits[codeptr].strip():
                         input_box.send_keys(char)
-                        time.sleep(random.uniform(0.1 , 0.3))
+                        # time.sleep(random.uniform(0.1 , 0.3))
                     time.sleep(0.2)
-                    the_hash_key.click()
+                    # the_hash_key.click()
 
                     # get the caption....
                     try:
@@ -164,21 +165,32 @@ def dial_the_num(number ,codeptr):
                         print(f"the caption get caption2 : {caption2}")
 
                         # check the caption bro
-                        keywords = ["We're sorry", "was not recognized", "Press 0 to speak with a specialist", "followed by the pound sign","re enter your access code", "Ender your access code", "not recognized"]
+                        keywords = ["We're sorry", "was not recognized", "Press 0 to speak with a specialist", "followed by the pound sign","re enter your access code", "Ender your access code", "not recognized", "was not recognised", "not recognised", "Please re-enter your access code", "re-enter your access code", "was not the code"]
+                        # keywords = ["something.."]
+                        key_found = False
                         for words in keywords:
                             if words.lower().strip() in caption2 :
                                 driver.find_element('xpath', "//button[@title='Close']").click()
                                 ActionChains(driver).key_down(Keys.CONTROL).key_down(Keys.SHIFT).send_keys('h').key_up(Keys.SHIFT).key_up(Keys.CONTROL).perform()
-                                cancel_butun = WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.XPATH, "(//div[@data-text-as-pseudo-element='Cancel'])[2]")))
-                                cancel_butun.click()
+                                try: 
+                                    cancel_butun = WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.XPATH, "(//div[@data-text-as-pseudo-element='Cancel'])[2]")))
+                                    cancel_butun.click()
+                                except:
+                                    pass
+                                key_found = True
+                                print("caption matched ....")
                                 break
-                        else:
+                        if key_found==False:
+                            print("caption doesn't matching..")
                             with open("doc/authCode.txt", 'a') as file :
                                 file.write(f"{code7digits[codeptr].strip()} : {caption2}\n")
                             driver.find_element('xpath', "//button[@title='Close']").click()
                             ActionChains(driver).key_down(Keys.CONTROL).key_down(Keys.SHIFT).send_keys('h').key_up(Keys.SHIFT).key_up(Keys.CONTROL).perform()
-                            cancel_butun = WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.XPATH, "(//div[@data-text-as-pseudo-element='Cancel'])[2]")))
-                            cancel_butun.click()
+                            try:
+                                cancel_butun = WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.XPATH, "(//div[@data-text-as-pseudo-element='Cancel'])[2]")))
+                                cancel_butun.click()
+                            except:
+                                pass
 
                     except Exception as error:
                         print("re enter the code again")

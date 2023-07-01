@@ -1,6 +1,1 @@
-8686767 : Access code was not recognised. Please re-enter.
-3456787 : Your access code was not recognised. Please re-enter your access code followed by the pound's.
-3456787 : Your access code was not recognised. Please re-enter your access code.
-8686767 : Access code was not recognised. Please re-enter your access code followed by the pound's.
-8786756 : Your access code was not recognised. Please re-enter your access code followed.
-3456787 : Your access code was not recognised. Please re-enter your access code followed by the pound.
+1819143# : There are one participants on the call including you. You're joining your conference as the host.
