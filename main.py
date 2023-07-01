@@ -5,6 +5,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import Select
 import platform
 import time
 import random
@@ -66,6 +67,11 @@ try:
         confirm_ph = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.ID, "loginHeader")))
         print("Its Asking You to confirm your phone number YO ")
         print(confirm_ph.text)
+        driver.find_element(By.XPATH , "//select[@id='phoneCountry']/option[text() = 'India ‏(‎+91)']").click()
+        time.sleep(0.2)
+        next_button = driver.find_element(By.XPATH , "//input[@id='idSIButton9']")
+        next_button.click()
+        
     except:
         pass
     #enter password..
