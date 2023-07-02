@@ -30,7 +30,7 @@ options.add_experimental_option("prefs", { \
 if platform.system().lower() == 'linux':
     options.add_argument("--user-data-dir=cookies")
 elif platform.system().lower() == "windows" :
-    options.add_argument("--user-data-dir=C:\\Users\\Admin\\AppData\\Local\\Google\\Chrome\\User Data\\autoskype")
+    options.add_argument("--user-data-dir=C:\\Users\\Admin\\AppData\\Local\\Google\\Chrome\\User Data\\autoskype2")
 
 #loading 7 digit codes and store in a list
 with open("doc/7digitcodes.txt", 'r') as file:
@@ -61,6 +61,11 @@ try:
     except:
         pass
     
+    try:
+        confirm_ph = driver.find_element(By.XPATH , "//div[@id='loginHeader']")
+        print(confirm_ph.text())
+    except:
+        pass
     #enter password..
     try:
         element = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.ID, "i0118")))
@@ -92,7 +97,7 @@ except Exception as error:
     print("already logged in...")
 
 
-def dial_the_num(number ,codeptr):
+def dial_the_num(number ,codeptr , remaining_codes):
     # wait for the dial pad to load and dial the call
     for i in range(5):
         try:
@@ -118,14 +123,28 @@ def dial_the_num(number ,codeptr):
 
     # manual code for explicitly wait and check the button is clickable or not
     # waiting for 15 sec
-    random_wait = random.randint(3,5)
+    random_wait = random.randint(2,4)
+    try:
+        error_popup = driver.find_element(By.XPATH , '//div[@data-text-as-pseudo-element = "Oops, something went wrong."]')
+        error = driver.find_element(By.XPATH , "(//button[@title='Close'])[2]")
+        time.sleep(0.5)
+        print('Bro the error message popped up')
+        error.click()
+    except:
+        print('No Error popup popped up bruh')
+        pass
+    
     for i in range(30):
         try:
             try:
                 error_popup = driver.find_element(By.XPATH , '//div[@data-text-as-pseudo-element = "Oops, something went wrong."]')
                 message = error_popup.get_attribute("data-text-as-pseudo-element")
+                time.sleep(0.5)
+                error = driver.find_element(By.XPATH , "(//button[@title='Close'])[2]")
+                print('Bro the error message popped up again')
                 print(message)
-                continue
+                error.click()
+                return "reEnter"
             except:          
             
                 try:
@@ -147,10 +166,11 @@ def dial_the_num(number ,codeptr):
 
                     
                     print(f'the code being used is {code7digits[codeptr]}')
+                    print(f'{remaining_codes} codes remaining')
                     for char in code7digits[codeptr].strip():
                         input_box.send_keys(char)
                         # time.sleep(random.uniform(0.1 , 0.3))
-                    time.sleep(0.2)
+                    time.sleep(3)
                     # the_hash_key.click()
 
                     # get the caption....
@@ -165,7 +185,7 @@ def dial_the_num(number ,codeptr):
                         print(f"the caption get caption2 : {caption2}")
 
                         # check the caption bro
-                        keywords = ["We're sorry", "was not recognized", "Press 0 to speak with a specialist", "followed by the pound sign","re enter your access code", "Ender your access code", "not recognized", "was not recognised", "not recognised", "Please re-enter your access code", "re-enter your access code", "was not the code"]
+                        keywords = ["We're sorry", "was not recognized", "Press 0 to speak with a specialist", "followed by the pound sign","re enter your access code", "Ender your access code", "not recognized", "was not recognised", "not recognised","by the pound sign" ,"Led by the","9","Please re-enter your access code", "re-enter your access code", "was not the code"]
                         # keywords = ["something.."]
                         key_found = False
                         for words in keywords:
@@ -181,7 +201,7 @@ def dial_the_num(number ,codeptr):
                                 print("caption matched ....")
                                 break
                         if key_found==False:
-                            print("caption doesn't matching..")
+                            print("caption didnt match..")
                             with open("doc/authCode.txt", 'a') as file :
                                 file.write(f"{code7digits[codeptr].strip()} : {caption2}\n")
                             driver.find_element('xpath', "//button[@title='Close']").click()
@@ -210,13 +230,12 @@ with open('doc/phonenumber.txt','r') as file:
 codeptr = 0
 for i in range(len(code7digits)) :
     # dial_the_call function call
-    r = dial_the_num(number, codeptr)
+    r = dial_the_num(number, codeptr , len(code7digits[codeptr : ]))
     while r == "reEnter":
-        r = dial_the_num(number, codeptr)
+        r = dial_the_num(number, codeptr , len(code7digits[codeptr : ]))
     codeptr += 1
     with open("doc/7digitcodes.txt", 'w') as file :
         for i in code7digits[codeptr : ]:
             file.write(i)
 
-time.sleep(1000)
 
