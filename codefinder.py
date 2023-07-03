@@ -14,16 +14,19 @@ import json
 from audioCaptcha import speech_rec
 
 
-myProxy = "20.44.206.138:80"
-proxy = Proxy({
-    'proxyType': ProxyType.MANUAL,
-    'httpProxy': myProxy,
-    'sslProxy': myProxy,
-    'noProxy': ''})
+#loading 7 digit codes and store in a list
+with open("doc/7digitcodes.txt", 'r') as file:
+    code7digits = file.readlines()
+#getting the phone number from the text file
+with open('doc/phonenumber.txt','r') as file:
+    number = file.read().strip()
+
+
+
 
 ## this is to make it platform independent....
 options = webdriver.ChromeOptions()
-options.proxy = proxy
+
 options.add_argument("--disable-notifications")
 options.add_argument("user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.84 Safari/537.36")
 #to disable the extensions
@@ -42,20 +45,40 @@ if platform.system().lower() == 'linux':
 elif platform.system().lower() == "windows" :
     options.add_argument("--user-data-dir=C:\\Users\\Admin\\AppData\\Local\\Google\\Chrome\\User Data\\autoskype4")
 
-#loading 7 digit codes and store in a list
-with open("doc/7digitcodes.txt", 'r') as file:
-    code7digits = file.readlines()
-with open('doc/phonenumber.txt','r') as file:
-    number = file.read().strip()
 
-# creating and opening browser with user data directory to save cookies
-driver = webdriver.Chrome(options=options)
-driver.get("https://teleconference.uc.att.com/ecm/")
-time.sleep(0.5)
-driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+
 
 pointer = 0
 for code7 in code7digits:
+    #the first half -------------------------------------------------------------------------------------------------------------------------------
+    # creating and opening browser with user data directory to save cookies
+    
+    myProxy = "43.153.64.134:443"
+    proxy = Proxy({
+    'proxyType': ProxyType.MANUAL,
+    'httpProxy': myProxy,
+    'sslProxy': myProxy,
+    'noProxy': ''})
+    options.proxy = proxy
+    driver = webdriver.Chrome(options=options)
+    driver.get("https://teleconference.uc.att.com/ecm/")
+
+    try:
+        page_load_failed = WebDriverWait(driver , 3).until(EC.presence_of_element_located((By.XPATH , "//div[@id='control-buttons']//button[@id='reload-button']")))
+        print('The Page Didint Load Bro')
+    except:
+        print('Page Load Succeeded')
+        pass
+
+    time.sleep(0.5)
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+
+
+
+
+    #The Second Half ---------------------------------------------------------------------------------------------------------------------------
     print('Putting  the phone number')
     phone_number_input = WebDriverWait(driver , 10).until(EC.presence_of_element_located((By.XPATH , "//input[@id='bp']")))
     phone_number_input.click()
