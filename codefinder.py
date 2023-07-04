@@ -32,12 +32,6 @@ options.add_argument("user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3)
 #to disable the extensions
 options.add_argument("--disable-extensions")
 
-options.add_experimental_option("prefs", { \
-    "profile.default_content_setting_values.media_stream_mic": 2, 
-    "profile.default_content_setting_values.media_stream_camera": 2,
-    "profile.default_content_setting_values.geolocation": 1, 
-    "profile.default_content_setting_values.notifications": 1 
-  })
 
 
 if platform.system().lower() == 'linux':
@@ -54,7 +48,7 @@ for code7 in code7digits:
     #the first half -------------------------------------------------------------------------------------------------------------------------------
     # creating and opening browser with user data directory to save cookies
     
-    myProxy = "43.153.64.134:443"
+    myProxy = "181.211.245.190:5678"
     proxy = Proxy({
     'proxyType': ProxyType.MANUAL,
     'httpProxy': myProxy,
@@ -63,7 +57,7 @@ for code7 in code7digits:
     options.proxy = proxy
     driver = webdriver.Chrome(options=options)
     driver.get("https://teleconference.uc.att.com/ecm/")
-
+    time.sleep(120)
     try:
         page_load_failed = WebDriverWait(driver , 3).until(EC.presence_of_element_located((By.XPATH , "//div[@id='control-buttons']//button[@id='reload-button']")))
         print('The Page Didint Load Bro')
